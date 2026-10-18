@@ -1,0 +1,10 @@
+{
+  "appId": "vn.behocchu.chucai",
+  "appName": "Bé Học Chữ",
+  "webDir": "www",
+  "backgroundColor": "#dff0ff",
+  "ios": {
+    "contentInset": "never",
+    "preferredContentMode": "mobile"
+  }
+}
