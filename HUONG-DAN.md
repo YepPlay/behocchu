@@ -11,6 +11,7 @@
 | Tạo audio còn thiếu (chỉ tạo file chưa có) | `node tools/gen-audio.js` |
 | Tạo lại **toàn bộ** audio | `node tools/gen-audio.js --force` |
 | Kiểm tra từ gây nhiễu (nên < 1%) | `node tools/check-words.js` |
+| Kiểm tra toàn bộ file audio (đủ file + MP3 hợp lệ + precache) | `node tools/check-audio.js` |
 | **Làm mới cache offline** (chạy sau mỗi lần sửa file) | `node tools/gen-sw.js` |
 | Kiểm tra cú pháp 1 file JS | `node --check js/games.js` |
 
@@ -66,6 +67,8 @@ Rồi upload lại. *(Chỉ mở `index.html` trực tiếp trên máy tính th�
 | `lNN.mp3` | Âm đọc của chữ cái ở vị trí `NN` |
 | `wNN_k.mp3` | Từ thứ `k` (1–5) của chữ cái ở vị trí `NN` |
 | `p01.mp3` | Câu "Bé còn đó không?" (chế độ Nghe) |
+| `sNN.mp3` | Âm tiết của chế độ **Ghép Âm** (NN = số thứ tự trong `BLENDS`) |
+| `cNN.mp3` | Từ ghép của chế độ **Từ Ghép** (NN = số thứ tự trong `COMPOUNDS`) |
 
 Bảng vị trí:
 
@@ -79,6 +82,8 @@ Bảng vị trí:
 | 06 | D | 12 | I | 18 | Ô | 24 | T |  |  |
 
 *Ví dụ:* chữ **P** là vị trí **20** → từ thứ 1 là `w20_1.mp3`, từ thứ 4 là `w20_4.mp3`.
+
+> ⚠️ File `sNN` / `cNN` cũng tính theo **vị trí trong mảng** `BLENDS` / `COMPOUNDS` trong `js/data.js`. Chèn/xoá mục ở giữa sẽ làm lệch số file của các mục sau — cách an toàn: `Remove-Item assets\audio\s*.mp3, assets\audio\c*.mp3` rồi `node tools/gen-audio.js`.
 
 ---
 
@@ -105,13 +110,30 @@ node tools/gen-sw.js
 
 ---
 
-## 5. Quy tắc khi thêm từ vào `js/data.js`
+> 🔁 **Chế độ chơi mãi (không có thanh tiến trình):** *Nối Từ · Chính Tả – Xếp Chữ · Ghép Âm · Từ Ghép*.
+> Mỗi vòng rút ngẫu nhiên từ dữ liệu (hết danh sách thì xáo lại, không lặp liền kề), bé tự bấm nút
+> **⬅ Thoát** để về menu — không có màn hình tổng kết, sao vẫn được lưu vào "sao tốt nhất".
 
+## 5. Quy tắc khi thêm dữ liệu vào `js/data.js`
+
+### 5.1. Từ của bảng chữ cái (`ALPHABET`)
 - Từ phải **chứa** chữ cái đang học (không nhất thiết bắt đầu bằng chữ đó), ví dụ chữ **I** → "Vịt", "Kính".
 - Mỗi chữ cái giữ **5 từ**, mỗi từ kèm 1 emoji.
 - Tránh dùng **emoji trùng** với từ khác (nhất là trong cùng một chữ cái).
 - Tránh từ tiếng nước ngoài (Pizza, Panda, Piano, Yoyo…).
 - Sửa xong luôn chạy: `node tools/check-words.js` rồi `node tools/gen-sw.js`.
+
+### 5.2. Âm tiết ghép âm (`BLENDS`) — chế độ Ghép Âm
+- Mỗi mục `{ c: phụ âm, r: vần, syl: âm tiết }`, ví dụ `{ c: "b", r: "ơ", syl: "bơ" }`.
+- **Chỉ thêm tổ hợp phát âm được** (viết tay, không sinh tự động) — tránh âm tiết sai như "qi".
+- `syl` phải duy nhất trong mảng (phương án nhiễu lấy từ chính danh sách này).
+- Thêm/xoá mục ở giữa mảng → làm lại audio (xem cảnh báo mục 3).
+- Sau khi sửa: `node tools/gen-audio.js` → `node tools/gen-sw.js`.
+
+### 5.3. Từ ghép (`COMPOUNDS`) — chế độ Từ Ghép
+- Mỗi mục `{ a: vần 1, b: vần 2, w: "a b", e: emoji }` — với `w` luôn bằng `a + " " + b`.
+- Emoji **không được trùng** với mục khác trong cùng `COMPOUNDS`.
+- Sau khi sửa: `node tools/gen-audio.js` → `node tools/gen-sw.js`.
 
 ---
 
@@ -123,9 +145,10 @@ node tools/check-words.js
 node tools/gen-sw.js
 ```
 
-- [ ] Mở `index.html`, thử đủ 6 chế độ: Học Chữ Cái · Chọn Hình Theo Chữ · Nghe & Chọn Chữ · Nối Từ · Luyện Viết Chữ · Luyện Viết Chữ Đẹp
+- [ ] Mở `index.html`, thử đủ 9 chế độ: Học Chữ Cái · Chọn Hình Theo Chữ · Nghe & Chọn Chữ · Nối Từ · Luyện Viết Chữ · Luyện Viết Chữ Đẹp · Chính Tả – Xếp Chữ · Ghép Âm · Từ Ghép
 - [ ] Cả màn hình dọc và màn hình ngang đều không bị cuộn
 - [ ] `node tools/check-words.js` báo tỉ lệ thấp (0–1%)
+- [ ] `node tools/check-audio.js` báo **0 lỗi** (file audio đủ, MP3 hợp lệ, đã precache)
 - [ ] Đã chạy `node tools/gen-sw.js` sau lần sửa cuối cùng
 
 ---

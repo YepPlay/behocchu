@@ -106,6 +106,96 @@ const LETTER_SOUND = {
 
 const LETTERS = ALPHABET.map(a => a.letter);
 
+// Mọi từ của bảng chữ cái (dùng cho chế độ Chính Tả - Xếp Chữ).
+const ALL_WORDS = ALPHABET.flatMap(a => a.words.map(w => ({ letter: a.letter, word: w })));
+
+// Dữ liệu chế độ GHÉP ÂM: phụ âm + vần -> âm tiết.
+// Quy tắc: chỉ giữ tổ hợp phát âm được; dùng BẰNG TAY (không sinh tự động)
+// để tránh âm tiết sai (vd "qi"). Âm tiết cũng là phương án nhiễu hợp lệ.
+const BLENDS = [
+  // vần a
+  { c: "b", r: "a", syl: "ba" }, { c: "c", r: "a", syl: "ca" },
+  { c: "m", r: "a", syl: "ma" }, { c: "l", r: "a", syl: "la" },
+  { c: "h", r: "a", syl: "ha" }, { c: "x", r: "a", syl: "xa" },
+  { c: "d", r: "a", syl: "da" }, { c: "t", r: "a", syl: "ta" },
+  // vần ơ
+  { c: "b", r: "ơ", syl: "bơ" }, { c: "m", r: "ơ", syl: "mơ" },
+  { c: "n", r: "ơ", syl: "nơ" }, { c: "l", r: "ơ", syl: "lơ" },
+  { c: "đ", r: "ơ", syl: "đơ" },
+  // vần ô
+  { c: "c", r: "ô", syl: "cô" }, { c: "h", r: "ô", syl: "hô" },
+  { c: "đ", r: "ô", syl: "đô" },
+  // vần ai
+  { c: "m", r: "ai", syl: "mai" }, { c: "l", r: "ai", syl: "lai" },
+  { c: "h", r: "ai", syl: "hai" }, { c: "g", r: "ai", syl: "gai" },
+  // vần ao
+  { c: "c", r: "ao", syl: "cao" }, { c: "d", r: "ao", syl: "dao" },
+  { c: "s", r: "ao", syl: "sao" },
+  // vần ay
+  { c: "b", r: "ay", syl: "bay" }, { c: "m", r: "ay", syl: "may" },
+  { c: "t", r: "ay", syl: "tay" },
+  // vần ây
+  { c: "c", r: "ây", syl: "cây" }, { c: "đ", r: "ây", syl: "đây" },
+  { c: "g", r: "ây", syl: "gây" },
+  // vần oi
+  { c: "m", r: "oi", syl: "moi" }, { c: "r", r: "oi", syl: "roi" },
+  { c: "v", r: "oi", syl: "voi" },
+  // vần eo
+  { c: "h", r: "eo", syl: "heo" }, { c: "l", r: "eo", syl: "leo" },
+  { c: "t", r: "eo", syl: "teo" },
+  // vần an
+  { c: "b", r: "an", syl: "ban" }, { c: "l", r: "an", syl: "lan" },
+  { c: "t", r: "an", syl: "tan" },
+];
+BLENDS.forEach((b, i) => { b.k = i + 1; });
+
+// Dữ liệu chế độ TỪ GHÉP: vần 1 + vần 2 -> từ ghép (lớp 1).
+// Emoji không được trùng trong danh sách này.
+const COMPOUNDS = [
+  { a: "hoa",     b: "hồng",   w: "hoa hồng",     e: "🌹" },
+  { a: "trò",     b: "chơi",   w: "trò chơi",     e: "🎮" },
+  { a: "bạn",     b: "thân",   w: "bạn thân",     e: "🤝" },
+  { a: "màu",     b: "sắc",    w: "màu sắc",      e: "🎨" },
+  { a: "bánh",    b: "mì",     w: "bánh mì",      e: "🥖" },
+  { a: "máy",     b: "bay",    w: "máy bay",      e: "✈️" },
+  { a: "sân",     b: "trường", w: "sân trường",   e: "⚽" },
+  { a: "quả",     b: "cầu",    w: "quả cầu",      e: "🏀" },
+  { a: "bông",    b: "hoa",    w: "bông hoa",     e: "💐" },
+  { a: "quả",     b: "táo",    w: "quả táo",      e: "🍎" },
+  { a: "nụ",      b: "cười",   w: "nụ cười",      e: "😁" },
+  { a: "nhà",     b: "bếp",    w: "nhà bếp",      e: "🍳" },
+  { a: "cửa",     b: "sổ",     w: "cửa sổ",       e: "🪟" },
+  { a: "bàn",     b: "học",    w: "bàn học",      e: "📚" },
+  { a: "bút",     b: "chì",    w: "bút chì",      e: "✏️" },
+  { a: "đồng",    b: "hồ",     w: "đồng hồ",      e: "⏰" },
+  { a: "áo",      b: "mưa",    w: "áo mưa",       e: "🧥" },
+  { a: "chén",    b: "cơm",    w: "chén cơm",     e: "🍚" },
+  { a: "gấu",     b: "bông",   w: "gấu bông",     e: "🧸" },
+  { a: "con",     b: "đò",     w: "con đò",       e: "⛵" },
+  { a: "lều",     b: "trại",   w: "lều trại",     e: "⛺" },
+  { a: "cơn",     b: "mưa",    w: "cơn mưa",      e: "🌧️" },
+  { a: "vầng",    b: "trăng",  w: "vầng trăng",   e: "🌕" },
+  { a: "ngôi",    b: "sao",    w: "ngôi sao",     e: "🌟" },
+  { a: "con",     b: "thỏ",    w: "con thỏ",      e: "🐰" },
+  { a: "bông",    b: "lúa",    w: "bông lúa",     e: "🌾" },
+  { a: "thuyền",  b: "buồm",   w: "thuyền buồm",  e: "🚢" },
+  { a: "đôi",     b: "cánh",   w: "đôi cánh",     e: "🦋" },
+  { a: "ngón",    b: "tay",    w: "ngón tay",     e: "☝️" },
+  { a: "mái",     b: "tóc",    w: "mái tóc",      e: "💇" },
+  { a: "hạt",     b: "giống",  w: "hạt giống",    e: "🌱" },
+  { a: "quả",     b: "trứng",  w: "quả trứng",    e: "🥚" },
+  { a: "bến",     b: "xe",     w: "bến xe",       e: "🚌" },
+  { a: "trang",   b: "sách",   w: "trang sách",   e: "📖" },
+  { a: "đôi",     b: "mắt",    w: "đôi mắt",      e: "👀" },
+  { a: "quả",     b: "chuối",  w: "quả chuối",    e: "🍌" },
+];
+COMPOUNDS.forEach((c, i) => { c.k = i + 1; });
+
+// Tên file clip: "s01" = âm tiết số 1, "c01" = từ ghép số 1.
+const clipName = (prefix, k) => prefix + String(k).padStart(2, "0");
+const blendClip = b => clipName("s", b.k);
+const compoundClip = c => clipName("c", c.k);
+
 const PHRASES = [
   { key: "still", text: "Bé còn đó không?" },
 ];
@@ -118,6 +208,9 @@ const MODES = {
   match:  { name: "Nối Từ",              icon: "🔗" },
   write:  { name: "Luyện Viết Chữ",     icon: "✍️" },
   beauty: { name: "Luyện Viết Chữ Đẹp",  icon: "🖋️" },
+  spell:  { name: "Chính Tả – Xếp Chữ",  icon: "🧩" },
+  blend:  { name: "Ghép Âm",             icon: "🔤" },
+  compound: { name: "Từ Ghép",           icon: "🧱" },
 };
 
 const THEMES = {

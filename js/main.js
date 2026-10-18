@@ -406,7 +406,20 @@ function init() {
     applyTheme(store.theme === "girl" ? "boy" : "girl");
     buildMenu();
   };
-  $("#btn-back").onclick = () => { Sfx.click(); Game.cancel(); buildMenu(); show("screen-menu"); };
+  $("#btn-back").onclick = () => {
+    Sfx.click();
+    // Chế độ chơi mãi không có màn hình tổng kết → lưu "sao tốt nhất" khi bé thoát.
+    const snap = Game.snapshot ? Game.snapshot() : null;
+    if (snap && snap.endless) {
+      const p = progress();
+      p.total += snap.stars;
+      p.best[snap.mode] = Math.max(p.best[snap.mode] || 0, snap.stars);
+      saveStore();
+    }
+    Game.cancel();
+    buildMenu();
+    show("screen-menu");
+  };
   $("#btn-menu").onclick = () => { Sfx.click(); buildMenu(); show("screen-menu"); };
   $("#btn-replay").onclick = () => { Sfx.click(); if (lastPlay) startMode(lastPlay.mode); };
 

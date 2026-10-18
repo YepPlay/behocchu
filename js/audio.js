@@ -206,6 +206,26 @@ const Voice = (() => {
     await playFile(FOLDER + name + ".mp3", my);
   }
 
+  // Phát 1 clip theo tên file (không có đuôi .mp3), vd "s01", "c12", "p01".
+  async function runClip(name) {
+    const my = ++seq;
+    stopAll();
+    if (!name) return;
+    await playFile(FOLDER + name + ".mp3", my);
+  }
+
+  // Nén nền một danh sách clip (mỗi file cách nhau 20ms, chia 3 luồng).
+  function fillQueue(names) {
+    const queue = names.slice();
+    let i = 0;
+    const worker = () => {
+      if (i >= queue.length) return;
+      const src = queue[i++];
+      getBuf(src).catch(() => { bufs.delete(src); }).then(() => setTimeout(worker, 20));
+    };
+    for (let n = 0; n < 3; n++) worker();
+  }
+
   return {
     available: true,
 
@@ -226,6 +246,9 @@ const Voice = (() => {
 
     sayPhrase(key) { return runPhrase(key); },
 
+    // Phát clip tên tùy ý: sNN (âm tiết ghép âm), cNN (từ ghép)...
+    sayClip(name) { return runClip(name); },
+
     // Giải mã nền: chữ cái trước, rồi tới các từ — chia 3 luồng, mỗi file cách nhau
     // 20ms để không giật giao diện. Bé vào màn hình học là âm thanh đã sẵn trong RAM.
     preload(letters) {
@@ -241,13 +264,12 @@ const Voice = (() => {
           if (s) queue.push(s);
         });
       });
-      let i = 0;
-      const worker = () => {
-        if (i >= queue.length) return;
-        const src = queue[i++];
-        getBuf(src).catch(() => { bufs.delete(src); }).then(() => setTimeout(worker, 20));
-      };
-      for (let n = 0; n < 3; n++) worker();
+      fillQueue(queue);
+    },
+
+    // Giải mã nền danh sách clip có tên tùy ý (vd ["s01", "s02", ...]).
+    preloadClips(names) {
+      fillQueue((names || []).map(n => FOLDER + n + ".mp3"));
     },
 
     stop() { seq++; stopAll(); },

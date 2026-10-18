@@ -16,16 +16,31 @@ function loadData() {
   const code = fs.readFileSync(path.join(ROOT, "js", "data.js"), "utf8");
   const ctx = {};
   vm.createContext(ctx);
-  vm.runInContext(code, ctx, { filename: "data.js" });
-  return ctx;
+  // const/let trong data.js KHÔNG gắn vào context object → phải export tường minh.
+  vm.runInContext(
+    code + "\n;globalThis.__x = { ALPHABET, PHRASES, PHRASE_INDEX, BLENDS, COMPOUNDS };",
+    ctx,
+    { filename: "data.js" }
+  );
+  return ctx.__x;
 }
 const D = loadData();
 const expected = new Map();
-const ALPHABET = D.ALPHABET || [];
-const AUDIO_INDEX = D.AUDIO_INDEX || {};
-const LETTER_MAP = D.LETTER_MAP || {};
-const PHRASES = D.PHRASES || [];
-const PHRASE_INDEX = D.PHRASE_INDEX || {};
+const add = (file, desc) => expected.set(file, desc);
+
+const pad2 = n => String(n).padStart(2, "0");
+
+(D.ALPHABET || []).forEach((a, i) => {
+  const idx = pad2(i + 1);
+  add(`l${idx}.mp3`, `âm đọc chữ ${a.letter}`);
+  (a.words || []).forEach(w => add(`w${idx}_${w.k}.mp3`, `từ "${w.w}" (chữ ${a.letter})`));
+});
+(D.PHRASES || []).forEach(p => {
+  const name = (D.PHRASE_INDEX || {})[p.key];
+  if (name) add(name + ".mp3", `câu "${p.text}"`);
+});
+(D.BLENDS || []).forEach(b => add(`s${pad2(b.k)}.mp3`, `âm tiết "${b.syl}" (${b.c} + ${b.r})`));
+(D.COMPOUNDS || []).forEach(c => add(`c${pad2(c.k)}.mp3`, `từ ghép "${c.w}"`));
 
 // --- đọc sw.js để biết precache ---
 const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
@@ -54,25 +69,10 @@ function mp3Info(buf) {
   return { ok: dur > 0.12, why: dur > 0.12 ? "" : "thời lượng quá ngắn/bitrate 0", sr, dur };
 }
 
+const rows = [];
+let bad = 0, okCount = 0;
+
 for (const [file, desc] of [...expected.entries()].sort()) {
-  const fp = path.join(AUDIO_DIR, file);
-  if (!fs.existsSync(fp)) { rows.push(["MISSING", file, "thiếu file", desc]); bad++; continue; }
-  const st = fs.statSync(fp);
-  if (!st.size) { rows.push(["EMPTY", file, "file rỗng", desc]); bad++; continue; }
-  const info = mp3Info(fs.readFileSync(fp));
-  if (!info.ok) { rows.push(["BAD", file, info.why, desc]); bad++; continue; }
-  if (!precached.has(file)) { rows.push(["NOPRECACHE", file, "không có trong sw.js", desc]); bad++; continue; }
-  okCount++;
-}
-  const fp = path.join(AUDIO_DIR, file);
-  if (!fs.existsSync(fp)) { rows.push(["MISSING", file, "thiếu file", desc]); bad++; continue; }
-  const st = fs.statSync(fp);
-  if (!st.size) { rows.push(["EMPTY", file, "file rỗng", desc]); bad++; continue; }
-  const info = mp3Info(fs.readFileSync(fp));
-  if (!info.ok) { rows.push(["BAD", file, info.why, desc]); bad++; continue; }
-  if (!precached.has(file)) { rows.push(["NOPRECACHE", file, "không có trong sw.js", desc]); bad++; continue; }
-  okCount++;
-}
   const fp = path.join(AUDIO_DIR, file);
   if (!fs.existsSync(fp)) { rows.push(["MISSING", file, "thiếu file", desc]); bad++; continue; }
   const st = fs.statSync(fp);

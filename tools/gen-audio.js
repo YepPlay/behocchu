@@ -12,9 +12,9 @@ const UA =
 const sandbox = {};
 vm.createContext(sandbox);
 const src = fs.readFileSync(path.join(ROOT, "js", "data.js"), "utf8")
-  + "\n;globalThis.__out = { ALPHABET, LETTER_SOUND, PHRASES, PHRASE_INDEX };";
+  + "\n;globalThis.__out = { ALPHABET, LETTER_SOUND, PHRASES, PHRASE_INDEX, BLENDS, COMPOUNDS };";
 vm.runInContext(src, sandbox);
-const { ALPHABET, LETTER_SOUND, PHRASES, PHRASE_INDEX } = sandbox.__out;
+const { ALPHABET, LETTER_SOUND, PHRASES, PHRASE_INDEX, BLENDS, COMPOUNDS } = sandbox.__out;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -90,6 +90,28 @@ async function download(text, file) {
     const size = await download(p.text, file);
     done++;
     console.log(`  ✓ ${path.basename(file)}  câu "${p.text}"  (${size} bytes)`);
+    await sleep(250);
+  }
+
+  // Âm tiết chế độ Ghép Âm: s01.mp3, s02.mp3...
+  for (const b of (BLENDS || [])) {
+    const file = path.join(OUT_DIR, `s${String(b.k).padStart(2, "0")}.mp3`);
+    total++;
+    if (!FORCE && fs.existsSync(file) && fs.statSync(file).size > 500) { skipped++; continue; }
+    const size = await download(b.syl, file);
+    done++;
+    console.log(`  ✓ ${path.basename(file)}  âm tiết "${b.syl}" (${b.c} + ${b.r})  (${size} bytes)`);
+    await sleep(250);
+  }
+
+  // Từ ghép chế độ Từ Ghép: c01.mp3, c02.mp3...
+  for (const c of (COMPOUNDS || [])) {
+    const file = path.join(OUT_DIR, `c${String(c.k).padStart(2, "0")}.mp3`);
+    total++;
+    if (!FORCE && fs.existsSync(file) && fs.statSync(file).size > 500) { skipped++; continue; }
+    const size = await download(c.w, file);
+    done++;
+    console.log(`  ✓ ${path.basename(file)}  từ ghép "${c.w}"  (${size} bytes)`);
     await sleep(250);
   }
 
