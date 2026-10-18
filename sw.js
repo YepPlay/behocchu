@@ -1,8 +1,9 @@
-const CACHE = "vl-chu-cai-56c535c853";
+const CACHE = "vl-chu-cai-6f0e017722";
 const ASSETS = [
   "./index.html",
   "./manifest.webmanifest",
   "./css/style.css",
+  "./_audiotest.html",
   "./assets/audio/l01.mp3",
   "./assets/audio/l02.mp3",
   "./assets/audio/l03.mp3",
