@@ -13,9 +13,8 @@
 | Kiểm tra từ gây nhiễu (nên < 1%) | `node tools/check-words.js` |
 | **Làm mới cache offline** (chạy sau mỗi lần sửa file) | `node tools/gen-sw.js` |
 | Kiểm tra cú pháp 1 file JS | `node --check js/games.js` |
-| Gom web vào `www/` (để đóng gói app iOS) | `npm run build:www` |
 
-> 📱 Đóng gói thành **app iOS cài thủ công** (Xcode hoặc build trên cloud): xem file **`IOS-BUILD.md`**.
+> 🌐 Game chạy online/offline dạng **PWA**: xem mục 4 (GitHub Pages → Thêm vào Màn hình chính).
 
 > ⚠️ `node tools/gen-audio.js` **cần mạng Internet** (lấy giọng đọc từ Google Dịch). Chơi game thì **không cần mạng**.
 > File mp3 nhỏ hơn 500 bytes bị coi là lỗi và sẽ được tạo lại ở lần chạy sau.
@@ -128,21 +127,5 @@ node tools/gen-sw.js
 - [ ] Cả màn hình dọc và màn hình ngang đều không bị cuộn
 - [ ] `node tools/check-words.js` báo tỉ lệ thấp (0–1%)
 - [ ] Đã chạy `node tools/gen-sw.js` sau lần sửa cuối cùng
-- [ ] Nếu build app iOS: đã chạy `npm run ios:sync` (lệnh này tự gọi `build:www`)
 
 ---
-
-## 7. Đóng gói thành app iOS (cài thủ công, chơi offline)
-
-Xem hướng dẫn chi tiết trong **`IOS-BUILD.md`**. Tóm tắt:
-
-| Việc | Lệnh / Cách làm |
-| --- | --- |
-| Có Mac + Xcode | `npm run build:www` → mở `ios-native/BeHocChu.xcodeproj` → chọn **Team** → bấm **Run** |
-| Không có Mac | Đẩy lên repo GitHub → tab **Actions** → **Build iOS IPA** → tải `.ipa` → ký bằng **Sideloadly** trên Windows (cần iTunes bản từ **apple.com**, không phải bản Microsoft Store) |
-| Sau mỗi lần sửa game | Chạy `npm run build:www` (hoặc build trong Xcode — build tự chạy lại bước này) rồi push để Actions tạo `.ipa` mới |
-
-- App native **offline 100%**, không cần host, không cần mạng (khác bản PWA).
-- Apple ID **miễn phí** → app hết hạn sau **7 ngày**, phải ký lại (tối đa 3 app/máy).
-- **Apple Developer** 99$/năm → app sống **1 năm**.
-- iOS 27 **không** dùng được TrollStore (chỉ hỗ trợ iOS ≤ 17.0).

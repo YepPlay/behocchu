@@ -1,14 +1,5 @@
-# Dependencies
+# Dependencies (nếu sau này thêm tool npm)
 node_modules/
-
-# Web build output (sinh lại bằng: node tools/build-www.js)
-www/
-
-# Xcode build products
-ios-native/build/
-ios-native/DerivedData/
-*.xcuserstate
-xcuserdata/
 
 # OS
 .DS_Store

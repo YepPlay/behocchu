@@ -1,9 +1,0 @@
-{
-  "name": "be-hoc-chu-cai",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Game học 29 chữ cái tiếng Việt cho bé",
-  "scripts": {
-    "build:www": "node tools/build-www.js"
-  }
-}
