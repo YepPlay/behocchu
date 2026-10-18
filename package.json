@@ -4,16 +4,6 @@
   "private": true,
   "description": "Game học 29 chữ cái tiếng Việt cho bé",
   "scripts": {
-    "build:www": "node tools/build-www.js",
-    "ios:add": "npm run build:www && npx cap add ios",
-    "ios:sync": "npm run build:www && npx cap sync ios",
-    "ios:open": "npx cap open ios"
-  },
-  "dependencies": {
-    "@capacitor/core": "^8.5.3",
-    "@capacitor/ios": "^8.5.3"
-  },
-  "devDependencies": {
-    "@capacitor/cli": "^8.5.3"
+    "build:www": "node tools/build-www.js"
   }
 }

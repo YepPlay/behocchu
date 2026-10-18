@@ -14,9 +14,6 @@
 | **Làm mới cache offline** (chạy sau mỗi lần sửa file) | `node tools/gen-sw.js` |
 | Kiểm tra cú pháp 1 file JS | `node --check js/games.js` |
 | Gom web vào `www/` (để đóng gói app iOS) | `npm run build:www` |
-| Tạo project Xcode (chỉ lần đầu, cần Mac) | `npx cap add ios` |
-| Đồng bộ web mới vào app iOS | `npm run ios:sync` |
-| Mở Xcode | `npm run ios:open` |
 
 > 📱 Đóng gói thành **app iOS cài thủ công** (Xcode hoặc build trên cloud): xem file **`IOS-BUILD.md`**.
 
@@ -136,9 +133,9 @@ Xem hướng dẫn chi tiết trong **`IOS-BUILD.md`**. Tóm tắt:
 
 | Việc | Lệnh / Cách làm |
 | --- | --- |
-| Có Mac + Xcode | `npm install` → `npm run build:www` → `npx cap add ios` → `npm run ios:sync` → `npm run ios:open` → chọn Team rồi bấm **Run** |
-| Không có Mac | Đẩy lên repo GitHub public → tab **Actions** → **Build iOS IPA** → tải `.ipa` → ký bằng **Sideloadly** trên Windows (cần iTunes bản từ **apple.com**, không phải bản Microsoft Store) |
-| Sau mỗi lần sửa game | `npm run ios:sync` rồi build lại |
+| Có Mac + Xcode | `npm run build:www` → mở `ios-native/BeHocChu.xcodeproj` → chọn **Team** → bấm **Run** |
+| Không có Mac | Đẩy lên repo GitHub → tab **Actions** → **Build iOS IPA** → tải `.ipa` → ký bằng **Sideloadly** trên Windows (cần iTunes bản từ **apple.com**, không phải bản Microsoft Store) |
+| Sau mỗi lần sửa game | Chạy `npm run build:www` (hoặc build trong Xcode — build tự chạy lại bước này) rồi push để Actions tạo `.ipa` mới |
 
 - App native **offline 100%**, không cần host, không cần mạng (khác bản PWA).
 - Apple ID **miễn phí** → app hết hạn sau **7 ngày**, phải ký lại (tối đa 3 app/máy).

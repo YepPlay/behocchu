@@ -20,9 +20,10 @@ for (const d of DIRS) {
 
 const htmlPath = path.join(OUT, "index.html");
 let html = fs.readFileSync(htmlPath, "utf8");
+// App iOS load bang WKWebView voi scheme file:// nen CSP can cho phep file:
 html = html.replace(
   /(<meta http-equiv="Content-Security-Policy" content=")([^"]*)(")/,
-  (m, head, csp, tail) => head + csp.replace(/'self'/g, "'self' capacitor:") + tail
+  (m, head, csp, tail) => head + csp.replace(/'self'/g, "'self' file:") + tail
 );
 fs.writeFileSync(htmlPath, html, "utf8");
 
@@ -46,4 +47,4 @@ function walk(dir) {
 const { n, bytes } = walk(OUT);
 console.log("www/ san sang: " + n + " file, " + (bytes / 1048576).toFixed(1) + " MB");
 console.log("Thu muc: " + path.relative(ROOT, OUT));
-console.log("Buoc tiep theo: npx cap add ios  (lan dau)  roi  npx cap sync ios");
+console.log("Buoc tiep theo: mo ios-native/BeHocChu.xcodeproj bang Xcode (xem IOS-BUILD.md)");
