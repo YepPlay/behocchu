@@ -11,19 +11,30 @@ jobs:
     runs-on: macos-14
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
 
       - name: Build web assets (www/)
         run: node tools/build-www.js
 
+      - name: Show project info
+        run: |
+          {
+            echo "## Xcode & project info"
+            echo '```'
+            xcodebuild -version
+            xcodebuild -project ios-native/BeHocChu.xcodeproj -list
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Archive
         run: |
-          xcodebuild \
+          set -o pipefail
+          if xcodebuild \
             -project ios-native/BeHocChu.xcodeproj \
             -scheme BeHocChu \
             -configuration Release \
@@ -32,7 +43,24 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            archive
+            archive 2>&1 | tee build.log; then
+            echo "- Archive: OK" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "- Archive: FAILED"
+              echo ""
+              echo "## xcodebuild errors"
+              echo '```'
+              grep -E "error:|fatal:|Error:" build.log | tail -60
+              echo '```'
+              echo "### Last 40 lines"
+              echo '```'
+              tail -40 build.log
+              echo '```'
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+            grep -E "error:" build.log | tail -20 | sed 's/^/::error::xcodebuild: /'
+            exit 1
+          fi
 
       - name: Package IPA (unsigned)
         run: |
@@ -40,6 +68,14 @@ jobs:
           cp -R build/BeHocChu.xcarchive/Products/Applications/BeHocChu.app dist/Payload/
           cd dist
           zip -qry ../BeHocChu.ipa Payload
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: build.log
+          if-no-files-found: ignore
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4

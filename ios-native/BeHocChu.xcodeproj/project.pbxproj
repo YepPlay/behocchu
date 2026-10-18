@@ -148,7 +148,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if command -v node >/dev/null 2>\u00261; then node \"${PROJECT_DIR}/../../tools/build-www.js\"; else echo \"warning: node not found - using existing www/ folder (run: node tools/build-www.js)\"; fi\n";
+			shellScript = "if command -v node >/dev/null 2>\u00261; then node \"${PROJECT_DIR}/../tools/build-www.js\"; else echo \"warning: node not found - using existing www/ folder (run: node tools/build-www.js)\"; fi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
