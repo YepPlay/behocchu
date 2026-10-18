@@ -169,7 +169,7 @@ const Game = (() => {
       const card = area().querySelector("#learn-card");
       card.onclick = () => {
         Sfx.pop();
-        Voice.sayWords(letter, words.map(w => w.k));
+        Voice.sayLetter(letter);
         card.classList.remove("playing");
         void card.offsetWidth;
         card.classList.add("playing");

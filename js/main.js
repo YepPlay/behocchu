@@ -475,7 +475,8 @@ function init() {
     setTimeout(() => { copyBtn.textContent = "📋 Copy STK"; copyBtn.disabled = false; }, 1600);
   });
 
-  document.addEventListener("pointerdown", () => Sfx.warm(), { once: true });
+  document.addEventListener("pointerdown", () => { Sfx.warm(); Voice.warm(); }, { once: true });
+  setTimeout(() => Voice.preload(LETTERS), 600);
 
   const ro = new ResizeObserver(entries => {
     for (const e of entries) {

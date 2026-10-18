@@ -1,14 +1,20 @@
-const Sfx = (() => {
+// Dùng MỘT AudioContext duy nhất cho cả Sfx lẫn Voice.
+// iOS Safari: AudioContext phải được "mở khóa" trong 1 cử chỉ người dùng
+// (xem js/main.js — listener pointerdown gọi Sfx.warm()/Voice.warm()).
+const AudioCtx = (() => {
   let ctx = null;
-
-  function ac() {
+  return function () {
     if (!ctx) {
       try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
       catch (e) { return null; }
     }
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
-  }
+  };
+})();
+
+const Sfx = (() => {
+  const ac = AudioCtx;
 
   function tone(freq, t0, dur, type = "sine", vol = 0.22) {
     const c = ac();
@@ -49,9 +55,12 @@ function stripVN(s) {
 const Voice = (() => {
   const FOLDER = "assets/audio/";
   const hasTTS = "speechSynthesis" in window;
-  const cache = new Map();
-  let current = null;
-  let pending = null;
+  // src -> Promise<AudioBuffer>: tải + giải mã 1 lần, phát tức thì các lần sau.
+  // (Thay cho <audio>: iOS bỏ qua preload="auto" nên mỗi lần ấn phải đợi
+  // tải + giải mã → trễ. Web Audio phát từ bộ nhớ, không còn độ trễ.)
+  const bufs = new Map();
+  let current = null;   // AudioBufferSourceNode đang phát (nếu có)
+  let pending = null;   // callback resolve của lần phát hiện tại
   let seq = 0;
   let ttsVoice = null;
   let ttsTries = 0;
@@ -90,45 +99,63 @@ const Voice = (() => {
     } catch (e) { }
   }
 
-  function elem(src) {
-    let a = cache.get(src);
-    if (!a) {
-      a = new Audio(src);
-      a.preload = "auto";
-      cache.set(src, a);
-    }
-    return a;
-  }
-
   function fileFor(kind, letter, k) {
     const idx = AUDIO_INDEX[letter];
     if (!idx) return null;
     return FOLDER + (kind === "l" ? "l" + idx : "w" + idx + "_" + k) + ".mp3";
   }
+
+  // Tải + giải mã 1 file (giữ trong bộ nhớ, thử lại được nếu lỗi mạng).
+  function getBuf(src) {
+    let p = bufs.get(src);
+    if (!p) {
+      p = (async () => {
+        const c = AudioCtx();
+        if (!c) throw new Error("no AudioContext");
+        const res = await fetch(src);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.arrayBuffer();
+        return await new Promise((resolve, reject) => {
+          const r = c.decodeAudioData(data, resolve, reject); // bản cũ Safari chỉ có callback
+          if (r && typeof r.then === "function") r.then(resolve, reject);
+        });
+      })();
+      p.catch(() => { }); // nuốt unhandled rejection; caller tự xử lý
+      bufs.set(src, p);
+    }
+    return p;
+  }
+
   function playFile(src) {
     return new Promise(resolve => {
       if (!src) return resolve(false);
-      const a = elem(src);
-      current = a;
-      let done = false;
-      const fin = ok => {
-        if (done) return;
-        done = true;
-        if (pending === fin) pending = null;
-        resolve(ok);
-      };
-      pending = fin;
-      a.onended = () => fin(true);
-      a.onerror = () => fin(false);
-      try { a.currentTime = 0; } catch (e) { }
-      const p = a.play();
-      if (p && p.catch) p.catch(() => fin(false));
+      getBuf(src).then(buf => {
+        const c = AudioCtx();
+        if (!buf || !c) { bufs.delete(src); resolve(false); return; }
+        let done = false;
+        let node = null;
+        const fin = ok => {
+          if (done) return;
+          done = true;
+          if (pending === fin) pending = null;
+          if (current === node) current = null;
+          resolve(ok);
+        };
+        pending = fin;
+        try {
+          node = c.createBufferSource();
+          node.buffer = buf;
+          node.connect(c.destination);
+          node.onended = () => fin(true);
+          node.start(0);
+          current = node;
+        } catch (e) { fin(false); }
+      }, () => { bufs.delete(src); resolve(false); });
     });
   }
   function stopAll() {
-    if (current) { try { current.pause(); } catch (e) {} }
+    if (current) { const n = current; current = null; try { n.stop(); } catch (e) { } }
     if (pending) { const f = pending; pending = null; f(false); }
-    current = null;
     if (hasTTS) speechSynthesis.cancel();
   }
 
@@ -180,6 +207,8 @@ const Voice = (() => {
   return {
     get available() { return !!ttsVoice; },
 
+    warm() { AudioCtx(); },
+
     sayLetter(letter) { runSeq(letter, []); },
 
     sayPair(letter, word) {
@@ -193,15 +222,28 @@ const Voice = (() => {
 
     sayPhrase(key) { runPhrase(key); },
 
+    // Giải mã nền: chữ cái trước, rồi tới các từ — chia 3 luồng, mỗi file cách nhau
+    // 20ms để không giật giao diện. Bé vào màn hình học là âm thanh đã sẵn trong RAM.
     preload(letters) {
-      (letters || []).forEach(l => {
-        const srcL = fileFor("l", l);
-        if (srcL && !cache.has(srcL)) elem(srcL);
-        wordsOf(l).forEach(w => {
-          const src = fileFor("w", l, w.k);
-          if (src && !cache.has(src)) elem(src);
+      const ls = (letters || []).slice();
+      const queue = [];
+      ls.forEach(l => {
+        const sL = fileFor("l", l);
+        if (sL) queue.push(sL);
+      });
+      ls.forEach(l => {
+        (wordsOf(l) || []).forEach(w => {
+          const s = fileFor("w", l, w.k);
+          if (s) queue.push(s);
         });
       });
+      let i = 0;
+      const worker = () => {
+        if (i >= queue.length) return;
+        const src = queue[i++];
+        getBuf(src).catch(() => { bufs.delete(src); }).then(() => setTimeout(worker, 20));
+      };
+      for (let n = 0; n < 3; n++) worker();
     },
 
     stop() { seq++; stopAll(); },

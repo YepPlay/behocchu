@@ -835,7 +835,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   .match-board { grid-template-columns: auto auto; column-gap: 56px; }
   .m-pic, .m-letter { min-height: 62px; padding: 8px 10px; }
   .m-word { font-size: 13px; }
-  .choose-card { width: 45%; padding: 22px 12px; }
+  .choose-card { width: 100%; padding: 22px 12px; }
   .choose-card .avatar { font-size: 64px; }
   .choose-card .choose-name { font-size: 22px; }
   .icon-btn { width: 46px; height: 46px; font-size: 22px; }
