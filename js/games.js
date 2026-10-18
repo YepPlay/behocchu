@@ -260,8 +260,9 @@ const Game = (() => {
           Sfx.correct();
           btn.classList.add("good");
           UI.celebrate(btn);
-          Voice.sayPair(letter, wmap[letter]);
-          advance(1200);
+          // Chỉ chuyển vòng mới khi đã đọc xong chữ cái + từ (promise resolve).
+          // advance() có tự kiểm `state` nên nếu bé bấm Thoát giữa chừng thì vô hiệu.
+          Voice.sayPair(letter, wmap[letter]).then(() => advance(500));
         } else {
           first = false;
           state.streak = 0;

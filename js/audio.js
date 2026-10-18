@@ -211,18 +211,20 @@ const Voice = (() => {
 
     warm() { AudioCtx(); },
 
-    sayLetter(letter) { runSeq(letter, []); },
+    // Trả về Promise resolve khi PHÁT XONG — caller (vd pic mode) dùng để
+    // chỉ chuyển vòng mới sau khi bé đã nghe trọn tiếng chữ + tiếng từ.
+    sayLetter(letter) { return runSeq(letter, []); },
 
     sayPair(letter, word) {
       const w = word || randWord(letter);
-      runSeq(letter, w ? [w.k] : []);
+      return runSeq(letter, w ? [w.k] : []);
     },
 
-    sayWord(letter, k) { runWord(letter, k); },
+    sayWord(letter, k) { return runWord(letter, k); },
 
-    sayWords(letter, ks) { runSeq(letter, ks || []); },
+    sayWords(letter, ks) { return runSeq(letter, ks || []); },
 
-    sayPhrase(key) { runPhrase(key); },
+    sayPhrase(key) { return runPhrase(key); },
 
     // Giải mã nền: chữ cái trước, rồi tới các từ — chia 3 luồng, mỗi file cách nhau
     // 20ms để không giật giao diện. Bé vào màn hình học là âm thanh đã sẵn trong RAM.
