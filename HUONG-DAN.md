@@ -89,9 +89,14 @@ Bảng vị trí:
 node tools/gen-sw.js
 ```
 
-1. Upload **cả thư mục game** (gồm `index.html`, `manifest.webmanifest`, `sw.js`, `css/`, `js/`, `assets/`) lên host tĩnh có **HTTPS**:
-   - Dễ nhất: [app.netlify.com/drop](https://app.netlify.com/drop) hoặc Cloudflare Pages — kéo thả cả thư mục.
-   - Hoặc GitHub Pages.
+1. **Khuyến nghị: GitHub Pages** (miễn phí, đã có sẵn code trên GitHub):
+   - Mở repo trên github.com → **Settings → Pages** → mục **Build and deployment**:
+     - Source: **Deploy from a branch**
+     - Branch: **main** / **/ (root)** → bấm **Save**
+   - Đợi ~1 phút → trang hiện **"Your site is live at ..."**:
+     `https://yepplay.github.io/behocchu/`
+   - Lần sửa code sau: **push lên GitHub là site tự cập nhật**, không cần làm gì thêm.
+   - Cách khác (nếu không dùng GitHub): kéo thả cả thư mục lên [app.netlify.com/drop](https://app.netlify.com/drop) hoặc Cloudflare Pages (cũng miễn phí, có HTTPS).
 2. Trên iPhone mở bằng **Safari** (không phải Chrome) → nút **Chia sẻ** → **Thêm vào Màn hình chính**.
 3. Mở từ màn hình chính: chạy toàn màn hình như app và **chơi được offline**.
 

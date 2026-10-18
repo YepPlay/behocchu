@@ -1,4 +1,4 @@
-const CACHE = "vl-chu-cai-67470333bb";
+const CACHE = "vl-chu-cai-f1886ce622";
 const ASSETS = [
   "./index.html",
   "./manifest.webmanifest",
@@ -195,6 +195,7 @@ const ASSETS = [
   "./js/games.js",
   "./js/main.js",
   "./js/pwa.js",
+  "./package.json",
 ];
 
 self.addEventListener("install", function (event) {

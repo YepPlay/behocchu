@@ -4,7 +4,7 @@ const crypto = require("crypto");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "sw.js");
-const SKIP_DIRS = new Set(["tools", "node_modules", ".git", ".vscode", ".idea"]);
+const SKIP_DIRS = new Set(["tools", "node_modules", ".git", ".github", ".vscode", ".idea", "www", "ios-native"]);
 const EXT_OK = /\.(html|css|js|json|webmanifest|png|jpe?g|svg|ico|woff2?|ttf|mp3)$/i;
 const FIRST = ["index.html", "manifest.webmanifest", "css/style.css"];
 
